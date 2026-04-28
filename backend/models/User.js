@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema({
     },
     taxUrl: {
         type: String
+    },
+    reputation: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

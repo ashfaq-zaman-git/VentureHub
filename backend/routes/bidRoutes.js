@@ -51,4 +51,58 @@ router.get('/pitch/:pitchId', authMiddleware, async (req, res) => {
     }
 });
 
+// @route   PUT /api/bids/:id/counter
+// @desc    Counter-offer a bid (Entrepreneur)
+// @access  Private
+router.put('/:id/counter', authMiddleware, async (req, res) => {
+    try {
+        const { counterAmount, counterEquity, counterTerms } = req.body;
+        const bid = await Bid.findById(req.params.id);
+
+        if (!bid) return res.status(404).json({ message: "Bid not found" });
+
+        // Logic to verify if current user is the pitch owner could be added here
+
+        bid.status = 'Countered';
+        bid.counterAmount = Number(counterAmount);
+        bid.counterEquity = Number(counterEquity);
+        bid.counterTerms = counterTerms;
+
+        await bid.save();
+        res.json(bid);
+    } catch (error) {
+        console.error("Error countering bid:", error);
+        res.status(500).json({ message: "Server error countering bid" });
+    }
+});
+
+// @route   PUT /api/bids/:id/respond
+// @desc    Accept or Reject a counter-offer (Investor)
+// @access  Private
+router.put('/:id/respond', authMiddleware, async (req, res) => {
+    try {
+        const { decision } = req.body; // 'Accepted' or 'Rejected'
+        const bid = await Bid.findById(req.params.id);
+
+        if (!bid) return res.status(404).json({ message: "Bid not found" });
+        if (bid.investorId.toString() !== req.user.id) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        bid.status = decision;
+        if (decision === 'Accepted' && bid.counterAmount) {
+            // Update the main offer with the accepted counter values
+            bid.offerAmount = bid.counterAmount;
+            bid.offerEquity = bid.counterEquity;
+            bid.termsAndConditions = bid.counterTerms;
+        }
+
+        await bid.save();
+        res.json(bid);
+    } catch (error) {
+        console.error("Error responding to bid:", error);
+        res.status(500).json({ message: "Server error responding to bid" });
+    }
+});
+
 module.exports = router;

@@ -26,6 +26,15 @@ const bidSchema = new mongoose.Schema({
         type: String,
         enum: ['Pending', 'Accepted', 'Rejected', 'Countered'],
         default: 'Pending'
+    },
+    counterAmount: {
+        type: Number
+    },
+    counterEquity: {
+        type: Number
+    },
+    counterTerms: {
+        type: String
     }
 }, { timestamps: true });
 

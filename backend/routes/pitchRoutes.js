@@ -5,6 +5,8 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 const authMiddleware = require('../middleware/authMiddleware');
 const Pitch = require('../models/Pitch');
+const User = require('../models/User');
+const SavedSearch = require('../models/SavedSearch');
 const generateEmbedding = require('../utils/generateEmbedding');
 
 // Configure Multer Storage for Cloudinary
@@ -65,6 +67,25 @@ router.post('/', authMiddleware, upload.array('media', 5), async (req, res) => {
         });
 
         const savedPitch = await newPitch.save();
+
+        // FR-4: Check Saved Searches and notify users
+        const savedSearches = await SavedSearch.find({
+            $or: [
+                { category: savedPitch.category },
+                { tag: { $in: savedPitch.tags } },
+                { minAsk: { $lte: savedPitch.financials.askAmount } },
+                { maxAsk: { $gte: savedPitch.financials.askAmount } }
+            ]
+        });
+
+        const io = req.app.get('io');
+        savedSearches.forEach(search => {
+            // Emit notification to specific user
+            io.to(search.userId.toString()).emit('new_pitch_match', {
+                message: `A new pitch matching your interest was posted: ${savedPitch.title}`,
+                pitchId: savedPitch._id
+            });
+        });
 
         res.status(201).json(savedPitch);
     } catch (error) {
@@ -188,6 +209,15 @@ router.put('/:id/like', authMiddleware, async (req, res) => {
         }
 
         await pitch.save();
+
+        // FR-2: Reputation logic (+5 for like, -5 for unlike)
+        const isLiked = pitch.likes.includes(req.user.id);
+        const entrepreneur = await User.findById(pitch.entrepreneurId);
+        if (entrepreneur) {
+            entrepreneur.reputation += isLiked ? 5 : -5;
+            await entrepreneur.save();
+        }
+
         res.json(pitch.likes);
     } catch (error) {
         console.error('Error liking pitch:', error);
