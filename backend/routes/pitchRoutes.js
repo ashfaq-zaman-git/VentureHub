@@ -212,13 +212,12 @@ router.put('/:id/like', authMiddleware, async (req, res) => {
 
         await pitch.save();
 
-        // Update entrepreneur's reputation
-        if (repChange !== 0) {
-            const entrepreneur = await User.findById(pitch.entrepreneurId);
-            if (entrepreneur) {
-                entrepreneur.reputation = (entrepreneur.reputation || 0) + repChange;
-                await entrepreneur.save();
-            }
+        // Update entrepreneur's reputation atomically to prevent race conditions
+        if (repChange !== 0 && pitch.entrepreneurId) {
+            await User.updateOne(
+                { _id: pitch.entrepreneurId },
+                { $inc: { reputation: repChange } }
+            );
         }
 
         res.json(pitch.likes);
