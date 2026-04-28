@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useToast } from '../context/ToastContext';
 
 const AdminDashboard = () => {
-    const toast = useToast();
     const [pendingUsers, setPendingUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -40,9 +38,8 @@ const AdminDashboard = () => {
 
             // Instantly remove the reviewed user from the queue
             setPendingUsers(pendingUsers.filter(user => user._id !== userId));
-            toast.success(`Application ${status} successfully!`);
         } catch (err) {
-            toast.error(err.response?.data?.message || `Error processing ${status} application`);
+            alert(err.response?.data?.message || `Error processing ${status} application`);
         }
     };
 
