@@ -9,7 +9,7 @@ const Dashboard = () => {
     const [error, setError] = useState('');
 
     const [activeBidPitchId, setActiveBidPitchId] = useState(null);
-    const [bidData, setBidData] = useState({ bidAmount: '', equityRequested: '', termsAndConditions: '' });
+    const [bidData, setBidData] = useState({ bidAmount: '', equityRequested: '' });
     const [bidLoading, setBidLoading] = useState(false);
     const [bidSuccess, setBidSuccess] = useState(null);
 
