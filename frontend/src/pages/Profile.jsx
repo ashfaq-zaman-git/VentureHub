@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useToast } from '../context/ToastContext';
 
 const Profile = () => {
+    const toast = useToast();
     const [pitches, setPitches] = useState([]);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -43,12 +45,12 @@ const Profile = () => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                
+
                 const [userRes, pitchesRes] = await Promise.all([
                     axios.get(`${import.meta.env.VITE_API_URL}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
                     axios.get(`${import.meta.env.VITE_API_URL}/api/pitches/mine`, { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
-                
+
                 setUser(userRes.data);
                 setPitches(pitchesRes.data);
 
@@ -60,12 +62,12 @@ const Profile = () => {
                         setFormData(profileRes.data.profile);
                         // format preferredIndustries for investor
                         if (userRes.data.role === 'Investor' && profileRes.data.profile.preferredIndustries) {
-                             setFormData({...profileRes.data.profile, preferredIndustries: profileRes.data.profile.preferredIndustries.join(', ') });
+                            setFormData({ ...profileRes.data.profile, preferredIndustries: profileRes.data.profile.preferredIndustries.join(', ') });
                         }
                     } else {
                         setProfile({});
                     }
-                } catch(pe) {
+                } catch (pe) {
                     console.log("Could not fetch profile info (might not exist yet)");
                     setProfile({});
                 }
@@ -119,10 +121,17 @@ const Profile = () => {
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
             });
             setUser(res.data);
+<<<<<<< HEAD
+            setKycFile(null);
+            toast.success('KYC video uploaded successfully! Under review.');
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Error uploading KYC video');
+=======
             setKycNidFile(null);
             setKycTaxFile(null);
         } catch (err) {
             alert(err.response?.data?.message || 'Error uploading KYC documents');
+>>>>>>> main
         } finally {
             setKycLoading(false);
         }
@@ -144,7 +153,7 @@ const Profile = () => {
                 throw new Error("No Gateway URL returned");
             }
         } catch (err) {
-            alert(err.response?.data?.message || err.message || 'Error initializing payment gateway');
+            toast.error(err.response?.data?.message || err.message || 'Error initializing payment gateway');
             setIsProcessing(false);
         }
     };
@@ -163,7 +172,7 @@ const Profile = () => {
                 return pitch;
             }));
         } catch (err) {
-            alert(err.response?.data?.message || 'Error updating like status');
+            toast.error(err.response?.data?.message || 'Error updating like status');
         }
     };
 
@@ -174,7 +183,7 @@ const Profile = () => {
 
         const token = localStorage.getItem('token');
         const fd = new FormData();
-        
+
         // Append text fields
         Object.keys(formData).forEach(key => {
             if (formData[key] !== null && formData[key] !== undefined) {
@@ -189,24 +198,25 @@ const Profile = () => {
 
         try {
             const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/profiles/me`, fd, {
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
             setProfile(res.data.profile);
-            
+
             // Re-sync form
             let updatedForm = { ...res.data.profile };
             if (user?.role === 'Investor' && res.data.profile.preferredIndustries) {
-                 updatedForm.preferredIndustries = res.data.profile.preferredIndustries.join(', ');
+                updatedForm.preferredIndustries = res.data.profile.preferredIndustries.join(', ');
             }
             setFormData(updatedForm);
-            
+
             setIsEditingProfile(false);
             setFileData({ avatar: null, logo: null, pitchDeck: null });
+            toast.success('Profile updated successfully!');
         } catch (err) {
-            alert(err.response?.data?.message || 'Error updating profile');
+            toast.error(err.response?.data?.message || 'Error updating profile');
         } finally {
             setProfileUpdateLoading(false);
         }
@@ -259,7 +269,7 @@ const Profile = () => {
                             <div className={`h-3 transition-all duration-700 ease-out ${progressColor}`} style={{ width: `${completeness}%` }}></div>
                         </div>
                         <div className="p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            
+
                             <div className="flex items-center gap-6">
                                 {/* Avatar Display */}
                                 {user.role === 'Investor' && profile.avatarUrl && (
@@ -269,9 +279,9 @@ const Profile = () => {
                                     <img src={profile.logoUrl} alt="Logo" className="w-20 h-20 rounded-md object-contain bg-gray-50 border p-1" />
                                 )}
                                 {((user.role === 'Investor' && !profile.avatarUrl) || (user.role === 'Entrepreneur' && !profile.logoUrl)) && (
-                                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border-2 border-dashed border-gray-300">
-                                         <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                     </div>
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border-2 border-dashed border-gray-300">
+                                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
                                 )}
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name} <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full ml-2 align-middle">{user.role}</span></h2>
@@ -283,8 +293,8 @@ const Profile = () => {
                                     )}
                                 </div>
                             </div>
-                            
-                            <button 
+
+                            <button
                                 onClick={() => setIsEditingProfile(!isEditingProfile)}
                                 className="px-5 py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg shadow transition-colors flex items-center gap-2"
                             >
@@ -297,46 +307,46 @@ const Profile = () => {
                             <div className="border-t border-gray-100 bg-gray-50 p-6 md:p-8 animate-fade-in-down">
                                 <form onSubmit={handleProfileSubmit} className="max-w-3xl">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        
+
                                         {/* Investor Fields */}
                                         {user.role === 'Investor' && (
                                             <>
                                                 <div className="col-span-1 md:col-span-2">
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Investment Thesis</label>
-                                                    <textarea 
-                                                        rows="3" 
-                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" 
+                                                    <textarea
+                                                        rows="3"
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
                                                         placeholder="What drives your investment strategy?"
                                                         value={formData.investmentThesis || ''}
-                                                        onChange={(e) => setFormData({...formData, investmentThesis: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, investmentThesis: e.target.value })}
                                                     ></textarea>
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Industries</label>
-                                                    <input 
-                                                        type="text" 
-                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" 
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
                                                         placeholder="e.g. Fintech, Edtech, Saas (comma separated)"
                                                         value={formData.preferredIndustries || ''}
-                                                        onChange={(e) => setFormData({...formData, preferredIndustries: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, preferredIndustries: e.target.value })}
                                                     />
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Typical Check Size ($)</label>
-                                                    <input 
-                                                        type="number" 
-                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" 
+                                                    <input
+                                                        type="number"
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
                                                         placeholder="e.g. 50000"
                                                         value={formData.typicalCheckSize || ''}
-                                                        onChange={(e) => setFormData({...formData, typicalCheckSize: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, typicalCheckSize: e.target.value })}
                                                     />
                                                 </div>
                                                 <div className="col-span-1 md:col-span-2">
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Upload Profile Avatar (JPG/PNG)</label>
-                                                    <input 
-                                                        type="file" 
+                                                    <input
+                                                        type="file"
                                                         accept="image/*"
-                                                        onChange={(e) => setFileData({...fileData, avatar: e.target.files[0]})}
+                                                        onChange={(e) => setFileData({ ...fileData, avatar: e.target.files[0] })}
                                                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-200 rounded-md p-1 bg-white"
                                                     />
                                                 </div>
@@ -348,20 +358,20 @@ const Profile = () => {
                                             <>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                                                    <input 
-                                                        type="text" 
-                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" 
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
                                                         placeholder="Your startup's name"
                                                         value={formData.companyName || ''}
-                                                        onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                                                     />
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Startup Stage</label>
-                                                    <select 
+                                                    <select
                                                         className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
                                                         value={formData.startupStage || ''}
-                                                        onChange={(e) => setFormData({...formData, startupStage: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, startupStage: e.target.value })}
                                                     >
                                                         <option value="">Select Stage...</option>
                                                         <option value="Idea">Idea</option>
@@ -371,29 +381,29 @@ const Profile = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Funding Goal ($)</label>
-                                                    <input 
-                                                        type="number" 
-                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" 
+                                                    <input
+                                                        type="number"
+                                                        className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
                                                         placeholder="e.g. 100000"
                                                         value={formData.fundingGoal || ''}
-                                                        onChange={(e) => setFormData({...formData, fundingGoal: e.target.value})}
+                                                        onChange={(e) => setFormData({ ...formData, fundingGoal: e.target.value })}
                                                     />
                                                 </div>
                                                 <div className="col-span-1 md:col-span-2">
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Company Logo (JPG/PNG)</label>
-                                                    <input 
-                                                        type="file" 
+                                                    <input
+                                                        type="file"
                                                         accept="image/*"
-                                                        onChange={(e) => setFileData({...fileData, logo: e.target.files[0]})}
+                                                        onChange={(e) => setFileData({ ...fileData, logo: e.target.files[0] })}
                                                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-200 rounded-md p-1 bg-white"
                                                     />
                                                 </div>
                                                 <div className="col-span-1 md:col-span-2">
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">Pitch Deck (PDF)</label>
-                                                    <input 
-                                                        type="file" 
+                                                    <input
+                                                        type="file"
                                                         accept=".pdf"
-                                                        onChange={(e) => setFileData({...fileData, pitchDeck: e.target.files[0]})}
+                                                        onChange={(e) => setFileData({ ...fileData, pitchDeck: e.target.files[0] })}
                                                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 border border-gray-200 rounded-md p-1 bg-white"
                                                     />
                                                     {profile.pitchDeckUrl && (
@@ -404,8 +414,8 @@ const Profile = () => {
                                         )}
                                     </div>
                                     <div className="mt-6 flex justify-end">
-                                        <button 
-                                            type="submit" 
+                                        <button
+                                            type="submit"
                                             disabled={profileUpdateLoading}
                                             className={`px-6 py-2.5 rounded-lg text-white font-bold shadow-md transition-colors ${profileUpdateLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                                         >
