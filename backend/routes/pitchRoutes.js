@@ -197,25 +197,28 @@ router.put('/:id/like', authMiddleware, async (req, res) => {
             return res.status(404).json({ message: 'Pitch not found' });
         }
 
-        // Check if the pitch has already been liked by this user
-        // pitch.likes is an array of ObjectIds, so we map them to strings to compare
-        if (pitch.likes.filter(like => like.toString() === req.user.id).length > 0) {
-            // Get remove index and remove the like
+        // FR-2: Determine reputation change (+5 for like, -5 for unlike)
+        let repChange = 0;
+        if (pitch.likes.some(like => like.toString() === req.user.id)) {
+            // Already liked -> Unliking
             const removeIndex = pitch.likes.map(like => like.toString()).indexOf(req.user.id);
             pitch.likes.splice(removeIndex, 1);
+            repChange = -5;
         } else {
-            // Add user to likes array
+            // Not liked -> Liking
             pitch.likes.unshift(req.user.id);
+            repChange = 5;
         }
 
         await pitch.save();
 
-        // FR-2: Reputation logic (+5 for like, -5 for unlike)
-        const isLiked = pitch.likes.includes(req.user.id);
-        const entrepreneur = await User.findById(pitch.entrepreneurId);
-        if (entrepreneur) {
-            entrepreneur.reputation += isLiked ? 5 : -5;
-            await entrepreneur.save();
+        // Update entrepreneur's reputation
+        if (repChange !== 0) {
+            const entrepreneur = await User.findById(pitch.entrepreneurId);
+            if (entrepreneur) {
+                entrepreneur.reputation = (entrepreneur.reputation || 0) + repChange;
+                await entrepreneur.save();
+            }
         }
 
         res.json(pitch.likes);
