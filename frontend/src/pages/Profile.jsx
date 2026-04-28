@@ -18,9 +18,18 @@ const Profile = () => {
     const [kycTaxFile, setKycTaxFile] = useState(null);
     const [kycLoading, setKycLoading] = useState(false);
 
+    // Investor Specific State
+    const [mySentBids, setMySentBids] = useState([]);
+    const [sentBidsLoading, setSentBidsLoading] = useState(false);
+
     // Payment State
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentAlert, setPaymentAlert] = useState(null);
+    
+    // Bidding/Countering State
+    const [counteringBidId, setCounteringBidId] = useState(null);
+    const [counterData, setCounterData] = useState({ amount: '', equity: '', terms: '' });
+    const [isCountering, setIsCountering] = useState(false);
 
     // Profile Gamification Form State
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -68,6 +77,21 @@ const Profile = () => {
                 } catch(pe) {
                     console.log("Could not fetch profile info (might not exist yet)");
                     setProfile({});
+                }
+
+                // If investor, fetch sent bids
+                if (userRes.data.role === 'Investor') {
+                    setSentBidsLoading(true);
+                    try {
+                        const bidsRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/bids/my-bids`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        setMySentBids(bidsRes.data);
+                    } catch (be) {
+                        console.error("Error fetching sent bids:", be);
+                    } finally {
+                        setSentBidsLoading(false);
+                    }
                 }
 
             } catch (err) {
@@ -212,6 +236,57 @@ const Profile = () => {
         }
     };
 
+    const handleCounterSubmit = async (bidId) => {
+        if (!counterData.amount || !counterData.equity) {
+            alert("Please provide at least a counter amount and equity.");
+            return;
+        }
+
+        setIsCountering(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/bids/${bidId}/counter`, {
+                counterAmount: counterData.amount,
+                counterEquity: counterData.equity,
+                counterTerms: counterData.terms
+            }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            // Update local state to reflect the counter
+            setActivePitchBids(activePitchBids.map(bid => 
+                bid._id === bidId ? { ...bid, ...res.data } : bid
+            ));
+            setCounteringBidId(null);
+            setCounterData({ amount: '', equity: '', terms: '' });
+            alert("Counter-offer sent successfully!");
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error sending counter-offer');
+        } finally {
+            setIsCountering(false);
+        }
+    };
+
+    const handleCounterResponse = async (bidId, decision) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/bids/${bidId}/respond`, {
+                decision
+            }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            // Update local state
+            setMySentBids(mySentBids.map(bid => 
+                bid._id === bidId ? { ...bid, status: decision, ...res.data } : bid
+            ));
+            
+            alert(`You have ${decision.toLowerCase()}ed the counter-offer.`);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error responding to counter-offer');
+        }
+    };
+
     const computeCompleteness = () => {
         if (!profile || Object.keys(profile).length === 0) return 0;
         let fields = [];
@@ -274,7 +349,15 @@ const Profile = () => {
                                      </div>
                                 )}
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name} <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full ml-2 align-middle">{user.role}</span></h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                                        {user.name} 
+                                        <span className="text-sm font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded-full ml-2 align-middle">{user.role}</span>
+                                        {user.reputation !== undefined && (
+                                            <span className="text-sm font-bold px-2 py-1 bg-amber-100 text-amber-700 rounded-full ml-2 align-middle border border-amber-200">
+                                                ⭐ {user.reputation}
+                                            </span>
+                                        )}
+                                    </h2>
                                     <p className="text-gray-500 font-medium">
                                         Profile Completeness: <span className={completeness === 100 ? 'text-green-600 font-bold' : 'text-blue-600'}>{completeness}%</span>
                                     </p>
@@ -647,7 +730,8 @@ const Profile = () => {
                                                 <div className="space-y-3">
                                                     <h4 className="text-sm font-semibold text-gray-800 mb-2 border-b border-blue-200 pb-1">Current Offers ({activePitchBids.length})</h4>
                                                     {activePitchBids.map(bid => (
-                                                        <div key={bid._id} className="bg-white p-3 rounded border border-blue-100 shadow-sm text-sm flex justify-between items-center bg-gradient-to-r from-white to-blue-50/30">
+                                                        <React.Fragment key={bid._id}>
+                                                            <div className="bg-white p-3 rounded border border-blue-100 shadow-sm text-sm flex justify-between items-center bg-gradient-to-r from-white to-blue-50/30">
                                                             <div>
                                                                 <span className="font-semibold text-gray-800">{bid.investorId?.name || 'Unknown Investor'}</span>
                                                                 <p className="text-xs text-gray-500 mt-1">Requested <span className="font-medium text-gray-700">{bid.offerEquity}%</span> equity</p>
@@ -658,11 +742,93 @@ const Profile = () => {
                                                                     </p>
                                                                 )}
                                                             </div>
-                                                            <div className="font-bold text-green-600 text-base">
-                                                                ${bid.offerAmount ? bid.offerAmount.toLocaleString() : '0'}
+                                                            <div className="text-right">
+                                                                <div className="font-bold text-green-600 text-base">
+                                                                    ${bid.offerAmount ? bid.offerAmount.toLocaleString() : '0'}
+                                                                </div>
+                                                                <div className={`text-[10px] uppercase font-bold mt-1 px-2 py-0.5 rounded-full inline-block ${
+                                                                    bid.status === 'Accepted' ? 'bg-green-100 text-green-700' : 
+                                                                    bid.status === 'Countered' ? 'bg-purple-100 text-purple-700' : 
+                                                                    bid.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                                                                }`}>
+                                                                    {bid.status}
+                                                                </div>
+                                                                {bid.status === 'Pending' && (
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            setCounteringBidId(bid._id);
+                                                                            setCounterData({ amount: bid.offerAmount, equity: bid.offerEquity, terms: bid.termsAndConditions || '' });
+                                                                        }}
+                                                                        className="block mt-2 text-[11px] text-blue-600 font-bold hover:underline"
+                                                                    >
+                                                                        Counter Offer
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    ))}
+
+                                                        {/* Counter Offer Form */}
+                                                        {counteringBidId === bid._id && (
+                                                            <div className="mt-2 bg-white p-4 rounded-lg border-2 border-blue-200 shadow-inner animate-fade-in-down">
+                                                                <h5 className="text-xs font-bold text-blue-800 mb-3 uppercase tracking-tight">Propose Your Counter Terms</h5>
+                                                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                                                    <div>
+                                                                        <label className="text-[10px] font-bold text-gray-500 block mb-1">Your Price ($)</label>
+                                                                        <input 
+                                                                            type="number" 
+                                                                            className="w-full text-xs p-2 border border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500"
+                                                                            value={counterData.amount}
+                                                                            onChange={(e) => setCounterData({...counterData, amount: e.target.value})}
+                                                                        />
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="text-[10px] font-bold text-gray-500 block mb-1">Your Equity (%)</label>
+                                                                        <input 
+                                                                            type="number" 
+                                                                            className="w-full text-xs p-2 border border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500"
+                                                                            value={counterData.equity}
+                                                                            onChange={(e) => setCounterData({...counterData, equity: e.target.value})}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="mb-3">
+                                                                    <label className="text-[10px] font-bold text-gray-500 block mb-1">Your Conditions</label>
+                                                                    <textarea 
+                                                                        className="w-full text-xs p-2 border border-gray-200 rounded focus:ring-blue-500 focus:border-blue-500"
+                                                                        rows="2"
+                                                                        value={counterData.terms}
+                                                                        onChange={(e) => setCounterData({...counterData, terms: e.target.value})}
+                                                                        placeholder="e.g. Board seat, monthly updates..."
+                                                                    ></textarea>
+                                                                </div>
+                                                                <div className="flex gap-2 justify-end">
+                                                                    <button 
+                                                                        onClick={() => setCounteringBidId(null)}
+                                                                        className="px-3 py-1.5 text-[11px] font-bold text-gray-500 hover:text-gray-700"
+                                                                    >
+                                                                        Cancel
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => handleCounterSubmit(bid._id)}
+                                                                        disabled={isCountering}
+                                                                        className="px-4 py-1.5 text-[11px] font-bold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors shadow-sm"
+                                                                    >
+                                                                        {isCountering ? 'Sending...' : 'Send Counter'}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Show Countered Info if status is Countered */}
+                                                        {bid.status === 'Countered' && (
+                                                            <div className="mt-2 p-3 bg-purple-50 border border-purple-100 rounded-lg text-xs italic text-purple-800">
+                                                                <span className="font-bold not-italic">Your Counter:</span> ${bid.counterAmount?.toLocaleString()} for {bid.counterEquity}% equity.
+                                                                {bid.counterTerms && <p className="mt-1">" {bid.counterTerms} "</p>}
+                                                                <p className="mt-2 text-[10px] not-italic font-bold text-purple-600 uppercase">Awaiting Investor response...</p>
+                                                            </div>
+                                                        )}
+                                                    </React.Fragment>
+                                                ))}
                                                 </div>
                                             )}
                                         </div>
@@ -670,6 +836,89 @@ const Profile = () => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* --- Investor Sent Offers Section --- */}
+                {user?.role === 'Investor' && (
+                    <div className="mt-16">
+                        <h2 className="text-3xl font-bold text-gray-800 mb-6">My Sent Offers</h2>
+                        {sentBidsLoading ? (
+                            <div className="text-center py-10 text-gray-500">Loading your offers...</div>
+                        ) : mySentBids.length === 0 ? (
+                            <div className="bg-white p-10 rounded-xl border border-dashed border-gray-300 text-center text-gray-500">
+                                You haven't made any investment offers yet.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {mySentBids.map(bid => (
+                                    <div key={bid._id} className="bg-white p-6 rounded-xl shadow-md border border-gray-100 flex flex-col">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900">{bid.pitchId?.title || 'Unknown Pitch'}</h3>
+                                                <p className="text-xs font-semibold text-blue-600 uppercase tracking-tight">{bid.pitchId?.category}</p>
+                                            </div>
+                                            <div className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
+                                                bid.status === 'Accepted' ? 'bg-green-100 text-green-700' : 
+                                                bid.status === 'Countered' ? 'bg-purple-100 text-purple-700' : 
+                                                bid.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                                {bid.status}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-gray-50 p-4 rounded-lg mb-4 flex justify-between items-center border border-gray-100">
+                                            <div>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase block">Your Offer</span>
+                                                <span className="text-xl font-black text-gray-800">${bid.offerAmount?.toLocaleString()}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase block">Equity</span>
+                                                <span className="text-lg font-bold text-blue-600">{bid.offerEquity}%</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Response Section for Counter-offers */}
+                                        {bid.status === 'Countered' && (
+                                            <div className="mt-auto pt-4 border-t border-purple-100 animate-pulse-subtle">
+                                                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mb-4">
+                                                    <h4 className="text-xs font-bold text-purple-900 uppercase mb-2">New Counter-Offer from Entrepreneur:</h4>
+                                                    <div className="flex justify-between items-end mb-3">
+                                                        <div>
+                                                            <span className="text-[10px] text-purple-400 font-bold uppercase block">Proposed Price</span>
+                                                            <span className="text-lg font-bold text-purple-800">${bid.counterAmount?.toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="text-[10px] text-purple-400 font-bold uppercase block">Proposed Equity</span>
+                                                            <span className="text-lg font-bold text-purple-800">{bid.counterEquity}%</span>
+                                                        </div>
+                                                    </div>
+                                                    {bid.counterTerms && (
+                                                        <p className="text-xs text-purple-700 italic bg-white p-2 rounded border border-purple-100">
+                                                            " {bid.counterTerms} "
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        onClick={() => handleCounterResponse(bid._id, 'Rejected')}
+                                                        className="flex-1 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors"
+                                                    >
+                                                        Decline
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleCounterResponse(bid._id, 'Accepted')}
+                                                        className="flex-1 px-4 py-2 text-sm font-bold bg-green-600 text-white hover:bg-green-700 rounded-lg shadow transition-colors"
+                                                    >
+                                                        Accept Counter
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

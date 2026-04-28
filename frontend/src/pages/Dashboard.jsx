@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -24,6 +24,10 @@ const Dashboard = () => {
     const [maxAsk, setMaxAsk] = useState('');
     const [selectedTag, setSelectedTag] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
+
+    // Notification State
+    const [notification, setNotification] = useState(null);
+    const [isSavingSearch, setIsSavingSearch] = useState(false);
 
     const fetchPitches = async () => {
         setLoading(true);
@@ -52,7 +56,41 @@ const Dashboard = () => {
 
     useEffect(() => {
         fetchPitches();
+
+        // Socket.io Setup
+        const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+        
+        socket.on('new_pitch_match', (data) => {
+            setNotification({
+                message: `🚀 Match Found! A new ${data.pitch.category} pitch matches your saved search: "${data.pitch.title}"`,
+                pitchId: data.pitch._id
+            });
+            // Auto-hide notification after 10 seconds
+            setTimeout(() => setNotification(null), 10000);
+        });
+
+        return () => socket.disconnect();
     }, []);
+
+    const handleSaveSearch = async () => {
+        setIsSavingSearch(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/explore/save-search`, {
+                category: selectedCategory,
+                minAsk: minAsk,
+                maxAsk: maxAsk,
+                tag: selectedTag
+            }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            alert("Search criteria saved! We will notify you when matching pitches are posted.");
+        } catch (err) {
+            alert(err.response?.data?.message || "Error saving search");
+        } finally {
+            setIsSavingSearch(false);
+        }
+    };
 
     const handleBidChange = (e) => {
         setBidData({ ...bidData, [e.target.name]: e.target.value });
@@ -261,20 +299,60 @@ const Dashboard = () => {
                                 Apply Filters
                             </button>
                             {(searchTerm || minAsk || maxAsk || selectedTag || selectedCategory) && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setSearchTerm(''); setMinAsk(''); setMaxAsk(''); setSelectedTag(''); setSelectedCategory('');
-                                        setTimeout(() => document.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 0);
-                                    }}
-                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors text-sm focus:outline-none"
-                                >
-                                    Clear
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchTerm(''); setMinAsk(''); setMaxAsk(''); setSelectedTag(''); setSelectedCategory('');
+                                            setTimeout(() => document.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })), 0);
+                                        }}
+                                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors text-sm focus:outline-none"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveSearch}
+                                        disabled={isSavingSearch}
+                                        className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-bold border border-indigo-200 transition-all text-sm flex items-center gap-2"
+                                    >
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"></path></svg>
+                                        {isSavingSearch ? 'Saving...' : 'Save Search for Alerts'}
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </form>
                 </div>
+
+                {/* Real-time Notification Toast */}
+                {notification && (
+                    <div className="fixed bottom-8 right-8 z-50 animate-bounce-in">
+                        <div className="bg-indigo-900 text-white p-5 rounded-2xl shadow-2xl border-2 border-indigo-400 flex items-center gap-4 max-w-md">
+                            <div className="bg-indigo-500 p-3 rounded-full animate-pulse">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm mb-1">New Match Found!</p>
+                                <p className="text-xs text-indigo-100 mb-3">{notification.message}</p>
+                                <button 
+                                    onClick={() => {
+                                        setNotification(null);
+                                        // Scroll to top and refresh to see new pitch
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        fetchPitches();
+                                    }}
+                                    className="bg-white text-indigo-900 px-4 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-50 transition-colors"
+                                >
+                                    View Pitch
+                                </button>
+                            </div>
+                            <button onClick={() => setNotification(null)} className="absolute top-2 right-2 text-indigo-300 hover:text-white">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                     {pitches.length === 0 ? (
@@ -305,6 +383,11 @@ const Dashboard = () => {
                                     </div>
                                     <p className="text-sm font-medium text-blue-600 mb-4 tracking-wide uppercase">
                                         {pitch.category} <span className="text-gray-400 font-normal normal-case mx-1">•</span> <span className="text-gray-600 font-normal normal-case">By {pitch.entrepreneurId?.name || 'Unknown'}</span>
+                                        {pitch.entrepreneurId?.reputation !== undefined && (
+                                            <span className="ml-2 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200" title="User Reputation Score">
+                                                ⭐ {pitch.entrepreneurId.reputation}
+                                            </span>
+                                        )}
                                     </p>
 
                                     <div className="mb-4">

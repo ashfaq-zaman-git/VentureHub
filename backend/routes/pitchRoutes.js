@@ -150,7 +150,7 @@ router.get('/', authMiddleware, async (req, res) => {
             query.tags = { $regex: new RegExp(`^${tag}$`, 'i') }; // Exact case-insensitive match inside array
         }
 
-        let pitches = await Pitch.find(query).populate('entrepreneurId', 'name');
+        let pitches = await Pitch.find(query).populate('entrepreneurId', 'name reputation');
 
         if (vectorSearchMode) {
             const cosineSimilarity = (vecA, vecB) => {

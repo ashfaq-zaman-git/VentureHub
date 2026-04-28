@@ -35,6 +35,22 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
+// @route   GET /api/bids/my-bids
+// @desc    Get all bids submitted by the current investor
+// @access  Private (Investors)
+router.get('/my-bids', authMiddleware, async (req, res) => {
+    try {
+        const bids = await Bid.find({ investorId: req.user.id })
+            .populate('pitchId', 'title category')
+            .sort({ createdAt: -1 });
+
+        res.json(bids);
+    } catch (error) {
+        console.error("Error fetching my bids:", error);
+        res.status(500).json({ message: "Server error fetching your bids" });
+    }
+});
+
 // @route   GET /api/bids/pitch/:pitchId
 // @desc    Get all bids for a specific pitch
 // @access  Private (Typically the Entrepreneur who owns the pitch)
