@@ -10,8 +10,6 @@ const PublicProfile = () => {
     const [userData, setUserData] = useState(null);
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState(null); // ADDED
-    const [bids, setBids] = useState([]); // UPDATED to array
     const [error, setError] = useState('');
     const [selectedInvestor, setSelectedInvestor] = useState(null);
 
@@ -21,6 +19,7 @@ const PublicProfile = () => {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/profiles/public/${id}`);
                 setUserData(res.data.user);
                 setProfileData(res.data.profile);
+<<<<<<< HEAD
 
                 // Fetch current user and check for bids
                 const token = localStorage.getItem('token');
@@ -38,6 +37,8 @@ const PublicProfile = () => {
                         setBids(bidRes.data);
                     }
                 }
+=======
+>>>>>>> main
             } catch (err) {
                 setError(err.response?.data?.message || 'Error fetching profile');
             } finally {
@@ -121,180 +122,191 @@ const PublicProfile = () => {
                                                 <p className="text-gray-400 italic">No investment thesis provided.</p>
                                             )}
                                         </section>
+<<<<<<< HEAD
 
-                                        {/* Bid Section for Entrepreneurs */}
-                                        {currentUser?.role === 'Entrepreneur' && bids && bids.length > 0 && (
-                                            <section className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow-md">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <h3 className="text-blue-900 font-black text-xl flex items-center gap-2">
-                                                        💰 Latest Bid on Your Pitch
-                                                    </h3>
-                                                    <span className="bg-blue-600 text-white text-xs font-black px-2 py-1 rounded">ACTIVE</span>
-                                                </div>
-                                                
-                                                {/* Prominent Latest Bid */}
-                                                <div className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm mb-6">
-                                                    <p className="text-sm font-bold text-gray-500 mb-2">Pitch: {bids[0].pitchId?.title}</p>
-                                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                                        <div>
-                                                            <p className="text-xs font-bold text-gray-400 uppercase mb-1">Offer Amount</p>
-                                                            <p className="text-2xl font-black text-blue-600">${bids[0].offerAmount?.toLocaleString()}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs font-bold text-gray-400 uppercase mb-1">Equity Requested</p>
-                                                            <p className="text-2xl font-black text-blue-600">{bids[0].offerEquity}%</p>
-                                                        </div>
-                                                    </div>
+    {/* Bid Section for Entrepreneurs */ }
+    {
+        currentUser?.role === 'Entrepreneur' && bids && bids.length > 0 && (
+            <section className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-blue-900 font-black text-xl flex items-center gap-2">
+                        💰 Latest Bid on Your Pitch
+                    </h3>
+                    <span className="bg-blue-600 text-white text-xs font-black px-2 py-1 rounded">ACTIVE</span>
+                </div>
 
-                                                    <div className="border-t border-blue-50 pt-3">
-                                                        <p className="text-xs font-bold text-gray-400 uppercase mb-1">Terms & Conditions</p>
-                                                        <p className="text-sm text-gray-700 italic">
-                                                            {bids[0].termsAndConditions || 'None'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Bid History (if any more exist) */}
-                                                {bids.length > 1 && (
-                                                    <div className="mt-4 pt-4 border-t border-blue-100">
-                                                        <h4 className="text-sm font-bold text-blue-800 mb-2 uppercase tracking-wider">Previous Bid History</h4>
-                                                        <ul className="space-y-2">
-                                                            {bids.slice(1).map((bid, index) => (
-                                                                <li key={index} className="text-sm text-blue-600 flex justify-between bg-blue-100/50 px-3 py-2 rounded-lg">
-                                                                    <span>Previously bid on: <span className="font-bold">{bid.pitchId?.title}</span></span>
-                                                                    <span className="font-black">${bid.offerAmount?.toLocaleString()}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </section>
-                                        )}
-
-                                        {/* Universal Contact Button for Entrepreneurs viewing an Investor */}
-                                        {currentUser?.role === 'Entrepreneur' && isInvestor && (
-                                             <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                                 <div className="mb-6">
-                                                     <h3 className="text-lg font-bold text-gray-900 mb-1">Ready to Connect?</h3>
-                                                     <p className="text-sm text-gray-500">Initiate a private conversation or directly share a pitch with {userData.name}.</p>
-                                                 </div>
-                                                 <div className="flex flex-col sm:flex-row gap-4">
-                                                     <Link 
-                                                         to={`/chat/${userData._id}`}
-                                                         className="flex-1 bg-white text-indigo-600 border-2 border-indigo-600 hover:bg-indigo-50 px-8 py-3 rounded-xl font-bold transition-all text-center transform active:scale-95 flex items-center justify-center gap-2"
-                                                     >
-                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                                                         Message
-                                                     </Link>
-                                                     <button 
-                                                         onClick={() => setSelectedInvestor({ id: userData._id, name: userData.name })}
-                                                         className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all transform active:scale-95 flex items-center justify-center gap-2"
-                                                     >
-                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                                                         Send Pitch
-                                                     </button>
-                                                 </div>
-                                             </section>
-                                        )}
-                                    </>
-                                )}
-
-                                {isEntrepreneur && (
-                                    <>
-                                        <section className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
-                                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                                <div>
-                                                    <h3 className="text-emerald-800 font-extrabold text-xl mb-1">Funding Goal</h3>
-                                                    <div className="text-3xl font-black text-emerald-600 tracking-tight">
-                                                        {profileData?.fundingGoal ? `$${profileData.fundingGoal.toLocaleString()}` : <span className="text-emerald-300 text-lg italic">Undisclosed</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="bg-white px-4 py-2 rounded-lg border border-emerald-200 shadow-sm">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Current Stage</span>
-                                                    <span className="text-lg font-bold text-gray-800 inline-flex items-center">
-                                                        <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
-                                                        {profileData?.startupStage || 'Startup'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </section>
-                                    </>
-                                )}
-                            </div>
-
-                            <div className="md:col-span-1 border-t md:border-t-0 md:border-l border-gray-100 pt-8 md:pt-0 md:pl-8 space-y-8">
-                                {isInvestor && (
-                                    <>
-                                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 text-center shadow-sm">
-                                            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Typical Check Size</h3>
-                                            <div className="text-2xl font-black text-indigo-600 drop-shadow-sm">
-                                                {profileData?.typicalCheckSize ? `$${profileData.typicalCheckSize.toLocaleString()}` : <span className="text-gray-400 text-base italic font-medium">Flexible</span>}
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-md">
-                                            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                                Preferred Industries
-                                            </h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {profileData?.preferredIndustries && profileData.preferredIndustries.length > 0 ? (
-                                                    profileData.preferredIndustries.map((ind, idx) => (
-                                                        <span key={idx} className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">{ind}</span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-sm text-gray-400 italic">Open to all sectors</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-
-                                {isEntrepreneur && (
-                                    <>
-                                        {profileData?.pitchDeckUrl ? (
-                                            <a
-                                                href={profileData.pitchDeckUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="w-full bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex flex-col items-center justify-center gap-2 group"
-                                            >
-                                                <svg className="w-8 h-8 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                <span className="text-lg tracking-wide">View Pitch Deck</span>
-                                                <span className="text-xs text-gray-400 font-medium">PDF Document</span>
-                                            </a>
-                                        ) : (
-                                            <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-xl text-center">
-                                                <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                                <p className="text-sm font-bold text-gray-400">No Pitch Deck Provided</p>
-                                            </div>
-                                        )}
-
-                                        <div className="mt-4 text-center">
-                                            <Link to={`/chat/${userData._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full transition-colors">
-                                                💬 Message {userData.name}
-                                            </Link>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                {/* Prominent Latest Bid */}
+                <div className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm mb-6">
+                    <p className="text-sm font-bold text-gray-500 mb-2">Pitch: {bids[0].pitchId?.title}</p>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase mb-1">Offer Amount</p>
+                            <p className="text-2xl font-black text-blue-600">${bids[0].offerAmount?.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase mb-1">Equity Requested</p>
+                            <p className="text-2xl font-black text-blue-600">{bids[0].offerEquity}%</p>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Pitch Selection Modal */}
-            {selectedInvestor && (
-                <PitchSelectionModal 
-                    investorId={selectedInvestor.id}
-                    investorName={selectedInvestor.name}
-                    onClose={() => setSelectedInvestor(null)}
-                    onPitchSent={() => {
-                        toast.success(`Pitch sent to ${selectedInvestor.name}!`);
-                    }}
-                />
-            )}
-        </div>
+                    <div className="border-t border-blue-50 pt-3">
+                        <p className="text-xs font-bold text-gray-400 uppercase mb-1">Terms & Conditions</p>
+                        <p className="text-sm text-gray-700 italic">
+                            {bids[0].termsAndConditions || 'None'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Bid History (if any more exist) */}
+                {bids.length > 1 && (
+                    <div className="mt-4 pt-4 border-t border-blue-100">
+                        <h4 className="text-sm font-bold text-blue-800 mb-2 uppercase tracking-wider">Previous Bid History</h4>
+                        <ul className="space-y-2">
+                            {bids.slice(1).map((bid, index) => (
+                                <li key={index} className="text-sm text-blue-600 flex justify-between bg-blue-100/50 px-3 py-2 rounded-lg">
+                                    <span>Previously bid on: <span className="font-bold">{bid.pitchId?.title}</span></span>
+                                    <span className="font-black">${bid.offerAmount?.toLocaleString()}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </section>
+        )
+    }
+
+    {/* Universal Contact Button for Entrepreneurs viewing an Investor */ }
+    {
+        currentUser?.role === 'Entrepreneur' && isInvestor && (
+            <section className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                <div className="mb-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Ready to Connect?</h3>
+                    <p className="text-sm text-gray-500">Initiate a private conversation or directly share a pitch with {userData.name}.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <Link
+                        to={`/chat/${userData._id}`}
+                        className="flex-1 bg-white text-indigo-600 border-2 border-indigo-600 hover:bg-indigo-50 px-8 py-3 rounded-xl font-bold transition-all text-center transform active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                        Message
+                    </Link>
+                    <button
+                        onClick={() => setSelectedInvestor({ id: userData._id, name: userData.name })}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        Send Pitch
+                    </button>
+                </div>
+            </section>
+        )
+    }
+=======
+>>>>>>> main
+                                    </>
+                                )}
+
+{
+    isEntrepreneur && (
+        <>
+            <section className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h3 className="text-emerald-800 font-extrabold text-xl mb-1">Funding Goal</h3>
+                        <div className="text-3xl font-black text-emerald-600 tracking-tight">
+                            {profileData?.fundingGoal ? `$${profileData.fundingGoal.toLocaleString()}` : <span className="text-emerald-300 text-lg italic">Undisclosed</span>}
+                        </div>
+                    </div>
+                    <div className="bg-white px-4 py-2 rounded-lg border border-emerald-200 shadow-sm">
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Current Stage</span>
+                        <span className="text-lg font-bold text-gray-800 inline-flex items-center">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
+                            {profileData?.startupStage || 'Startup'}
+                        </span>
+                    </div>
+                </div>
+            </section>
+        </>
+    )
+}
+                            </div >
+
+    <div className="md:col-span-1 border-t md:border-t-0 md:border-l border-gray-100 pt-8 md:pt-0 md:pl-8 space-y-8">
+        {isInvestor && (
+            <>
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 text-center shadow-sm">
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Typical Check Size</h3>
+                    <div className="text-2xl font-black text-indigo-600 drop-shadow-sm">
+                        {profileData?.typicalCheckSize ? `$${profileData.typicalCheckSize.toLocaleString()}` : <span className="text-gray-400 text-base italic font-medium">Flexible</span>}
+                    </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-md">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        Preferred Industries
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {profileData?.preferredIndustries && profileData.preferredIndustries.length > 0 ? (
+                            profileData.preferredIndustries.map((ind, idx) => (
+                                <span key={idx} className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider">{ind}</span>
+                            ))
+                        ) : (
+                            <span className="text-sm text-gray-400 italic">Open to all sectors</span>
+                        )}
+                    </div>
+                </div>
+            </>
+        )}
+
+        {isEntrepreneur && (
+            <>
+                {profileData?.pitchDeckUrl ? (
+                    <a
+                        href={profileData.pitchDeckUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex flex-col items-center justify-center gap-2 group"
+                    >
+                        <svg className="w-8 h-8 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span className="text-lg tracking-wide">View Pitch Deck</span>
+                        <span className="text-xs text-gray-400 font-medium">PDF Document</span>
+                    </a>
+                ) : (
+                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-xl text-center">
+                        <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        <p className="text-sm font-bold text-gray-400">No Pitch Deck Provided</p>
+                    </div>
+                )}
+
+                <div className="mt-4 text-center">
+                    <Link to={`/chat/${userData._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-full transition-colors">
+                        💬 Message {userData.name}
+                    </Link>
+                </div>
+            </>
+        )}
+    </div>
+                        </div >
+                    </div >
+                </div >
+            </div >
+
+    {/* Pitch Selection Modal */ }
+{
+    selectedInvestor && (
+        <PitchSelectionModal
+            investorId={selectedInvestor.id}
+            investorName={selectedInvestor.name}
+            onClose={() => setSelectedInvestor(null)}
+            onPitchSent={() => {
+                toast.success(`Pitch sent to ${selectedInvestor.name}!`);
+            }}
+        />
+    )
+}
+        </div >
     );
 };
 

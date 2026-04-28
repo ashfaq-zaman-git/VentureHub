@@ -137,7 +137,7 @@ const PitchDetail = () => {
                         </div>
                     )}
                 </div>
-                
+
                 <div className="bg-gray-900 px-8 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-xl font-black shadow-lg">
@@ -148,19 +148,19 @@ const PitchDetail = () => {
                             <p className="text-sm text-blue-400 font-bold uppercase tracking-widest">Founder / Entrepreneur</p>
                         </div>
                     </div>
-                    
+
                     <div className="flex gap-4">
                         {!isOwner && (
-                            <button 
+                            <button
                                 onClick={() => navigate(`/chat/${pitch.entrepreneurId?._id || pitch.entrepreneurId}`)}
                                 className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-2xl font-black transition-all border border-white/10"
                             >
                                 Message Founder
                             </button>
                         )}
-                        
+
                         {!isOwner && isInvestor && (
-                            <button 
+                            <button
                                 onClick={() => setShowBidForm(!showBidForm)}
                                 className="bg-green-500 hover:bg-green-400 text-white px-10 py-3 rounded-2xl font-black shadow-xl shadow-green-900/20 transition-all transform active:scale-95"
                             >
@@ -189,38 +189,38 @@ const PitchDetail = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Investment Amount ($)</label>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         required
                                         className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-green-500 font-bold"
                                         placeholder="e.g. 50000"
                                         value={bidData.offerAmount}
-                                        onChange={(e) => setBidData({...bidData, offerAmount: e.target.value})}
+                                        onChange={(e) => setBidData({ ...bidData, offerAmount: e.target.value })}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Equity Requested (%)</label>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         step="0.1"
                                         required
                                         className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-green-500 font-bold"
                                         placeholder="e.g. 5.0"
                                         value={bidData.offerEquity}
-                                        onChange={(e) => setBidData({...bidData, offerEquity: e.target.value})}
+                                        onChange={(e) => setBidData({ ...bidData, offerEquity: e.target.value })}
                                     />
                                 </div>
                             </div>
                             <div className="mb-8">
                                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Special Terms & Conditions</label>
-                                <textarea 
+                                <textarea
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-green-500 font-bold h-32"
                                     placeholder="e.g. Board seat required, milestones, etc."
                                     value={bidData.termsAndConditions}
-                                    onChange={(e) => setBidData({...bidData, termsAndConditions: e.target.value})}
+                                    onChange={(e) => setBidData({ ...bidData, termsAndConditions: e.target.value })}
                                 />
                             </div>
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={bidLoading}
                                 className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-2xl font-black text-lg transition-all shadow-xl disabled:opacity-50"
