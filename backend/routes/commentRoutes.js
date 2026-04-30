@@ -15,8 +15,8 @@ router.post('/', authMiddleware, async (req, res) => {
         const { text, pitchId, parentCommentId } = req.body;
         const user = await User.findById(req.user.id);
 
-        if (!user || !user.isPhoneVerified) {
-            return res.status(403).json({ message: 'Please verify your phone number to post comments' });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
         if (!text || !pitchId) {
