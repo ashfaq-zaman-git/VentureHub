@@ -81,9 +81,6 @@ const Dashboard = () => {
 
     const handleCommentSubmit = async (e, pitchId) => {
         e.preventDefault();
-        if (!currentUser?.isPhoneVerified) {
-            return toast.error('Please verify your phone number to comment');
-        }
         if (!newCommentText.trim()) return;
         setBidSuccess(null);
 

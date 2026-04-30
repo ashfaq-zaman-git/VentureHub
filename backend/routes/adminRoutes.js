@@ -9,7 +9,13 @@ const User = require('../models/User');
 // @access  Private/Admin
 router.get('/kyc-pending', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const pendingUsers = await User.find({ verificationStatus: 'pending' }).select('-password');
+        // Search for users who have either a pending video OR pending documents
+        const pendingUsers = await User.find({ 
+            $or: [
+                { verificationStatus: 'pending' }, 
+                { 'kycDocuments.status': 'pending' }
+            ] 
+        }).select('-password');
         res.json(pendingUsers);
     } catch (error) {
         console.error('Error fetching pending KYC:', error);
@@ -34,13 +40,16 @@ router.put('/kyc-review/:userId', authMiddleware, adminMiddleware, async (req, r
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Update both the old video status and the new document status
         user.verificationStatus = status;
+        if (user.kycDocuments) {
+            user.kycDocuments.status = status;
+        }
 
         if (status === 'rejected') {
             user.isVerified = false;
         } else if (status === 'approved') {
-            // Explicitly ensure the user does NOT get verified without paying the fee.
-            // This prevents old polluted testing data from bypassing the payment gateway.
+            // If the admin approves, they are approved but still need to pay the fee to be 'isVerified'
             user.isVerified = false;
         }
 

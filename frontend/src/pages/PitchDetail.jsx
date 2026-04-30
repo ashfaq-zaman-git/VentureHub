@@ -75,9 +75,6 @@ const PitchDetail = () => {
 
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
-        if (!currentUser?.isPhoneVerified) {
-            return toast.error('Please verify your phone number to comment');
-        }
         if (!commentText.trim()) return;
 
         try {
